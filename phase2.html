@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>US Counties Choropleth Maps</title>
+    <title>US Counties: Education & Economic Outcomes</title>
     <script src="https://d3js.org/d3.v6.min.js"></script>
     <script src="https://d3js.org/topojson.v3.min.js"></script>
     <style>
@@ -18,7 +18,19 @@
             overflow: hidden;
         }
         .map-container { position: relative; width: 100%; height: 100%; }
-        .legend { font-size: 12px; margin-top: 10px; display: flex; flex-direction: column; align-items: center; }
+        .legend-container {
+            font-size: 12px; 
+            margin-top: 10px; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center;
+            background: white;
+            padding: 10px;
+            border: 1px solid #ccc;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
+            width: 320px;
+        }
+        .legend-svg { width: 300px; height: 40px; }
         .tooltip {
             position: absolute;
             background: lightgray;
@@ -34,38 +46,46 @@
 <body>
     <h1>US Counties: Education & Economic Outcomes</h1>
 
-    <!-- Education Map Toggle -->
-    <div class="toggle-container">
-        <label>Select Education Level: </label>
-        <select id="educationToggle">
-            <option value="Ed2HSDiplomaOnlyPct">High School Diploma (%)</option>
-            <option value="Ed3SomeCollegePct">Some College (%)</option>
-            <option value="Ed5CollegePlusPct">Bachelor's & Higher (%)</option>
-        </select>
-    </div>
-
-    <div class="map-box">
-        <div class="map-container">
-            <svg id="educationMap" width="960" height="600"></svg>
+    <div class="container">
+        <!-- Education Map Section -->
+        <div class="toggle-container">
+            <label>Select Education Level: </label>
+            <select id="educationToggle">
+                <option value="Ed2HSDiplomaOnlyPct">High School Diploma (%)</option>
+                <option value="Ed3SomeCollegePct">Some College (%)</option>
+                <option value="Ed5CollegePlusPct">Bachelor's & Higher (%)</option>
+            </select>
         </div>
-        <div class="legend" id="educationLegend"></div>
-    </div>
 
-    <!-- Economic Map Toggle -->
-    <div class="toggle-container">
-        <label>Select Economic Indicator: </label>
-        <select id="economicToggle">
-            <option value="Median_HH_Inc_ACS">Median Household Income ($)</option>
-            <option value="Poverty_Rate_ACS">Poverty Rate (%)</option>
-            <option value="PerCapitaInc">Per Capita Income ($)</option>
-        </select>
-    </div>
-
-    <div class="map-box">
-        <div class="map-container">
-            <svg id="economicMap" width="960" height="600"></svg>
+        <div class="map-box">
+            <div class="map-container">
+                <svg id="educationMap" width="960" height="600"></svg>
+            </div>
         </div>
-        <div class="legend" id="economicLegend"></div>
+        <div class="legend-container">
+            <strong id="educationLegendTitle"></strong>
+            <svg class="legend-svg" id="educationLegend"></svg>
+        </div>
+
+        <!-- Economic Map Section -->
+        <div class="toggle-container">
+            <label>Select Economic Indicator: </label>
+            <select id="economicToggle">
+                <option value="Median_HH_Inc_ACS">Median Household Income ($)</option>
+                <option value="Poverty_Rate_ACS">Poverty Rate (%)</option>
+                <option value="PerCapitaInc">Per Capita Income ($)</option>
+            </select>
+        </div>
+
+        <div class="map-box">
+            <div class="map-container">
+                <svg id="economicMap" width="960" height="600"></svg>
+            </div>
+        </div>
+        <div class="legend-container">
+            <strong id="economicLegendTitle"></strong>
+            <svg class="legend-svg" id="economicLegend"></svg>
+        </div>
     </div>
 
     <div class="tooltip" id="tooltip"></div>
@@ -96,7 +116,7 @@
             const svg = d3.select(mapId);
             const g = svg.append("g");
             const zoom = d3.zoom()
-                .scaleExtent([1, 5]) // Zoom in/out range
+                .scaleExtent([1, 5])
                 .on("zoom", (event) => {
                     g.attr("transform", event.transform);
                 });
@@ -130,7 +150,7 @@
                     };
                 });
 
-                function drawMap(selectedCategory, g, colorScale, legendId, isEconomic = false) {
+                function drawMap(selectedCategory, g, colorScale, legendSvgId, legendTitleId, categoryLabels) {
                     g.selectAll("*").remove();
                     g.selectAll("path")
                         .data(topojson.feature(countyData, countyData.objects.counties).features)
@@ -145,7 +165,7 @@
                             let county = countyMap[d.id];
                             let value = county ? county[selectedCategory] : "No Data";
                             tooltip.style("visibility", "visible")
-                                .html(`<strong>${county ? county.County + ", " + county.State : "Unknown"}</strong><br>${isEconomic ? economicCategories[selectedCategory] : educationCategories[selectedCategory]}: ${value.toLocaleString()}`);
+                                .html(`<strong>${county ? county.County + ", " + county.State : "Unknown"}</strong><br>${categoryLabels[selectedCategory]}: ${value.toLocaleString()}`);
                         })
                         .on("mousemove", (event) => {
                             tooltip.style("top", (event.pageY - 10) + "px")
@@ -154,21 +174,48 @@
                         .on("mouseout", () => {
                             tooltip.style("visibility", "hidden");
                         });
-
-                    d3.select(`#${legendId}`).html(`<strong>${isEconomic ? economicCategories[selectedCategory] : educationCategories[selectedCategory]}</strong>`);
                 }
 
-                drawMap("Ed2HSDiplomaOnlyPct", educationSvg, educationColor, "educationLegend");
-                drawMap("Median_HH_Inc_ACS", economicSvg, economicColors["Median_HH_Inc_ACS"], "economicLegend", true);
+                function drawLegend(legendSvgId, legendTitleId, colorScale, min, max, label) {
+    d3.select(legendTitleId).text(label); // Update title text
+    const legendSvg = d3.select(legendSvgId);
+    legendSvg.selectAll("*").remove(); // Clear previous legend
 
-                d3.select("#educationToggle").on("change", function () {
-                    drawMap(this.value, educationSvg, educationColor, "educationLegend");
-                });
+    const defs = legendSvg.append("defs");
+    const linearGradient = defs.append("linearGradient")
+        .attr("id", legendSvgId + "-gradient")
+        .attr("x1", "0%")
+        .attr("x2", "100%");
 
-                d3.select("#economicToggle").on("change", function () {
-                    drawMap(this.value, economicSvg, economicColors[this.value], "economicLegend", true);
-                });
+    linearGradient.append("stop").attr("offset", "0%").attr("stop-color", colorScale(min));
+    linearGradient.append("stop").attr("offset", "100%").attr("stop-color", colorScale(max));
 
+    legendSvg.append("rect")
+        .attr("width", 300)
+        .attr("height", 15)
+        .attr("fill", `url(#${legendSvgId}-gradient)`);
+
+    legendSvg.append("text").attr("x", 0).attr("y", 30).text(min);
+    legendSvg.append("text").attr("x", 270).attr("y", 30).text(max);
+}
+
+
+function updateMaps() {
+    let selectedEducation = document.getElementById("educationToggle").value;
+    let selectedEconomic = document.getElementById("economicToggle").value;
+
+    drawMap(selectedEducation, educationSvg, educationColor, "#educationLegend", "#educationLegendTitle", educationCategories);
+    drawMap(selectedEconomic, economicSvg, economicColors[selectedEconomic], "#economicLegend", "#economicLegendTitle", economicCategories);
+
+    drawLegend("#educationLegend", "#educationLegendTitle", educationColor, 0, 100, educationCategories[selectedEducation]);
+    drawLegend("#economicLegend", "#economicLegendTitle", economicColors[selectedEconomic], economicColors[selectedEconomic].domain()[0], economicColors[selectedEconomic].domain()[1], economicCategories[selectedEconomic]);
+}
+
+
+                document.getElementById("educationToggle").addEventListener("change", updateMaps);
+                document.getElementById("economicToggle").addEventListener("change", updateMaps);
+
+                updateMaps();
             });
         });
     </script>
