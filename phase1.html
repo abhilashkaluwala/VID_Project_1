@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Education vs Economic Outcomes</title>
+    <script src="https://d3js.org/d3.v6.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; }
+        .chart-container { display: flex; justify-content: space-around; flex-wrap: wrap; }
+        .chart { margin: 20px; }
+        .axis-label { font-size: 14px; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <h1>Education vs Economic Outcomes</h1>
+    <h3>Data Source: Merged County Dataset</h3>
+    
+    <div class="chart-container">
+        <div id="histogramEducation" class="chart"></div>
+        <div id="histogramIncome" class="chart"></div>
+    </div>
+    
+    <div id="scatterplot" class="chart"></div>
+    
+    <script>
+        d3.csv("data.csv").then(function(data) {
+            data.forEach(d => {
+                d.Ed5CollegePlusPct = +d.Ed5CollegePlusPct;
+                d.Median_HH_Inc_ACS = +d.Median_HH_Inc_ACS;
+            });
+            
+            createHistogram(data, "Ed5CollegePlusPct", "#histogramEducation", "% with Bachelor's Degree or Higher");
+            createHistogram(data, "Median_HH_Inc_ACS", "#histogramIncome", "Median Household Income ($)");
+            createScatterPlot(data);
+        });
+
+        function createHistogram(data, key, container, xlabel) {
+    const margin = { top: 20, right: 30, bottom: 50, left: 50 },
+          width = 400 - margin.left - margin.right,
+          height = 300 - margin.top - margin.bottom;
+
+    const svg = d3.select(container)
+        .append("svg")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom)
+        .append("g")
+        .attr("transform", `translate(${margin.left},${margin.top})`);
+
+    const tooltip = d3.select("body").append("div")
+        .style("position", "absolute")
+        .style("background", "lightgray")
+        .style("padding", "8px")
+        .style("border-radius", "5px")
+        .style("box-shadow", "0px 0px 5px rgba(0,0,0,0.3)")
+        .style("visibility", "hidden")
+        .style("font-size", "12px");
+
+    const x = d3.scaleLinear()
+        .domain(d3.extent(data, d => d[key]))
+        .nice()
+        .range([0, width]);
+
+    const bins = d3.histogram()
+        .domain(x.domain())
+        .thresholds(x.ticks(20))
+        (data.map(d => d[key]));
+
+    const y = d3.scaleLinear()
+        .domain([0, d3.max(bins, d => d.length)])
+        .nice()
+        .range([height, 0]);
+
+    svg.append("g")
+        .selectAll("rect")
+        .data(bins)
+        .enter().append("rect")
+        .attr("x", d => x(d.x0))
+        .attr("y", d => y(d.length))
+        .attr("width", d => x(d.x1) - x(d.x0) - 1)
+        .attr("height", d => height - y(d.length))
+        .attr("fill", "steelblue")
+        .on("mouseover", (event, d) => {
+            // Get all counties in this bin
+            let countiesInBin = data.filter(item => item[key] >= d.x0 && item[key] < d.x1)
+                                    .map(item => `${item.County}, ${item.State}`); // County + State
+
+            let countyList = countiesInBin.length > 10 
+                ? countiesInBin.slice(0, 10).join("<br>") + "<br>..."  // Show only first 10
+                : countiesInBin.join("<br>");
+
+            tooltip.style("visibility", "visible")
+                .html(`<strong>Range:</strong> ${d.x0.toFixed(1)}% - ${d.x1.toFixed(1)}%<br>
+                       <strong>Count:</strong> ${d.length} counties<br>
+                       <strong>Sample Counties:</strong><br>${countyList}`);
+        })
+        .on("mousemove", (event) => {
+            tooltip.style("top", (event.pageY - 10) + "px")
+                .style("left", (event.pageX + 10) + "px");
+        })
+        .on("mouseout", () => {
+            tooltip.style("visibility", "hidden");
+        });
+
+    svg.append("g")
+        .attr("transform", `translate(0,${height})`)
+        .call(d3.axisBottom(x));
+
+    svg.append("g")
+        .call(d3.axisLeft(y));
+
+    svg.append("text")
+        .attr("x", width / 2)
+        .attr("y", height + 40)
+        .attr("text-anchor", "middle")
+        .attr("class", "axis-label")
+        .text(xlabel);
+
+    svg.append("text")
+        .attr("x", -height / 2)
+        .attr("y", -35)
+        .attr("transform", "rotate(-90)")
+        .attr("text-anchor", "middle")
+        .attr("class", "axis-label")
+        .text("Number of Counties");
+}
+
+
+
+function createScatterPlot(data) {
+    const margin = { top: 20, right: 30, bottom: 50, left: 50 },
+          width = 500 - margin.left - margin.right,
+          height = 400 - margin.top - margin.bottom;
+
+    const svg = d3.select("#scatterplot")
+        .append("svg")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom)
+        .append("g")
+        .attr("transform", `translate(${margin.left},${margin.top})`);
+
+    const tooltip = d3.select("body").append("div")
+        .style("position", "absolute")
+        .style("background", "lightgray")
+        .style("padding", "8px")
+        .style("border-radius", "5px")
+        .style("box-shadow", "0px 0px 5px rgba(0,0,0,0.3)")
+        .style("visibility", "hidden")
+        .style("font-size", "12px");
+
+    const x = d3.scaleLinear()
+        .domain(d3.extent(data, d => d.Ed5CollegePlusPct))
+        .nice()
+        .range([0, width]);
+
+    const y = d3.scaleLinear()
+        .domain(d3.extent(data, d => d.Median_HH_Inc_ACS))
+        .nice()
+        .range([height, 0]);
+
+    svg.append("g")
+        .attr("transform", `translate(0,${height})`)
+        .call(d3.axisBottom(x));
+
+    svg.append("g")
+        .call(d3.axisLeft(y));
+
+    svg.append("text")
+        .attr("x", width / 2)
+        .attr("y", height + 40)
+        .attr("text-anchor", "middle")
+        .attr("class", "axis-label")
+        .text("% with Bachelor's Degree or Higher");
+
+    svg.append("text")
+        .attr("x", -height / 2)
+        .attr("y", -35)
+        .attr("transform", "rotate(-90)")
+        .attr("text-anchor", "middle")
+        .attr("class", "axis-label")
+        .text("Median Household Income ($)");
+
+    svg.selectAll("circle")
+        .data(data)
+        .enter().append("circle")
+        .attr("cx", d => x(d.Ed5CollegePlusPct))
+        .attr("cy", d => y(d.Median_HH_Inc_ACS))
+        .attr("r", 3)
+        .attr("fill", "steelblue")
+        .attr("opacity", 0.7)
+        .on("mouseover", (event, d) => {
+            tooltip.style("visibility", "visible")
+                .html(`<strong>${d.County}, ${d.State}</strong><br>
+                       <strong>Bachelor's & Higher:</strong> ${d.Ed5CollegePlusPct}%<br>
+                       <strong>Income:</strong> $${d.Median_HH_Inc_ACS.toLocaleString()}`);
+        })
+        .on("mousemove", (event) => {
+            tooltip.style("top", (event.pageY - 10) + "px")
+                .style("left", (event.pageX + 10) + "px");
+        })
+        .on("mouseout", () => {
+            tooltip.style("visibility", "hidden");
+        });
+}
+
+
+
+    </script>
+</body>
+</html>

@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>US Counties Choropleth Maps</title>
+    <script src="https://d3js.org/d3.v6.min.js"></script>
+    <script src="https://d3js.org/topojson.v3.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; margin: 20px; }
+        .container { display: flex; flex-direction: column; align-items: center; gap: 30px; }
+        .map-container { position: relative; }
+        .legend { font-size: 12px; margin-top: 10px; }
+        .tooltip {
+            position: absolute;
+            background: lightgray;
+            padding: 5px;
+            border-radius: 5px;
+            box-shadow: 0px 0px 5px rgba(0,0,0,0.3);
+            font-size: 12px;
+            visibility: hidden;
+        }
+        .toggle-container { margin-bottom: 20px; }
+    </style>
+</head>
+<body>
+    <h1>US Counties: Education & Economic Outcomes</h1>
+
+    <!-- Education Map with Toggle -->
+    <div class="toggle-container">
+        <label>Select Education Level: </label>
+        <select id="educationToggle">
+            <option value="Ed2HSDiplomaOnlyPct">High School Diploma (%)</option>
+            <option value="Ed3SomeCollegePct">Some College (%)</option>
+            <option value="Ed5CollegePlusPct">Bachelor's & Higher (%)</option>
+        </select>
+    </div>
+    
+    <div class="container">
+        <div class="map-container">
+            <h3>Education Levels by County</h3>
+            <svg id="educationMap" width="960" height="600"></svg>
+            <div class="legend" id="educationLegend"></div>
+        </div>
+
+        <div class="map-container">
+            <h3>Median Household Income by County</h3>
+            <svg id="economicMap" width="960" height="600"></svg>
+            <div class="legend" id="economicLegend"></div>
+        </div>
+    </div>
+
+    <div class="tooltip" id="tooltip"></div>
+
+    <script>
+        const educationCategories = {
+            "Ed2HSDiplomaOnlyPct": "High School Diploma (%)",
+            "Ed3SomeCollegePct": "Some College (%)",
+            "Ed5CollegePlusPct": "Bachelor's & Higher (%)"
+        };
+
+        const width = 960, height = 600;
+
+        const educationColor = d3.scaleSequential(d3.interpolateBlues).domain([0, 100]);
+        const economicColor = d3.scaleSequential(d3.interpolateGreens).domain([20000, 120000]);
+
+        const educationSvg = d3.select("#educationMap");
+        const economicSvg = d3.select("#economicMap");
+        const tooltip = d3.select("#tooltip");
+
+        const projection = d3.geoAlbersUsa().scale(1300).translate([width / 2, height / 2]);
+        const path = d3.geoPath().projection(projection);
+
+        d3.json("us_counties.json").then(countyData => {
+            d3.csv("data.csv").then(data => {
+                
+                let countyMap = {};
+                data.forEach(d => {
+                    let fipsCode = d.FIPS.padStart(5, '0');
+                    countyMap[fipsCode] = {
+                        County: d.County,
+                        State: d.State,
+                        Ed2HSDiplomaOnlyPct: +d.Ed2HSDiplomaOnlyPct || 0,
+                        Ed3SomeCollegePct: +d.Ed3SomeCollegePct || 0,
+                        Ed5CollegePlusPct: +d.Ed5CollegePlusPct || 0,
+                        Median_HH_Inc_ACS: +d.Median_HH_Inc_ACS || 20000
+                    };
+                });
+
+                function drawEducationMap(selectedCategory) {
+                    educationSvg.selectAll("*").remove();
+                    educationSvg.selectAll("path")
+                        .data(topojson.feature(countyData, countyData.objects.counties).features)
+                        .enter().append("path")
+                        .attr("d", d => path(d) || "")
+                        .attr("fill", d => {
+                            let county = countyMap[d.id];
+                            return county ? educationColor(county[selectedCategory]) : "#ccc";
+                        })
+                        .attr("stroke", "#999")
+                        .on("mouseover", (event, d) => {
+                            let county = countyMap[d.id];
+                            let value = county ? county[selectedCategory] : "No Data";
+                            tooltip.style("visibility", "visible")
+                                .html(`<strong>${county ? county.County + ", " + county.State : "Unknown"}</strong><br>${educationCategories[selectedCategory]}: ${value}%`);
+                        })
+                        .on("mousemove", (event) => {
+                            tooltip.style("top", (event.pageY - 10) + "px")
+                                .style("left", (event.pageX + 10) + "px");
+                        })
+                        .on("mouseout", () => {
+                            tooltip.style("visibility", "hidden");
+                        });
+                }
+
+                function drawEconomicMap() {
+                    economicSvg.selectAll("*").remove();
+                    economicSvg.selectAll("path")
+                        .data(topojson.feature(countyData, countyData.objects.counties).features)
+                        .enter().append("path")
+                        .attr("d", d => path(d) || "")
+                        .attr("fill", d => {
+                            let county = countyMap[d.id];
+                            return county ? economicColor(county.Median_HH_Inc_ACS) : "#ccc";
+                        })
+                        .attr("stroke", "#999")
+                        .on("mouseover", (event, d) => {
+                            let county = countyMap[d.id];
+                            let value = county ? county.Median_HH_Inc_ACS : "No Data";
+                            tooltip.style("visibility", "visible")
+                                .html(`<strong>${county ? county.County + ", " + county.State : "Unknown"}</strong><br>Median Income: $${value.toLocaleString()}`);
+                        })
+                        .on("mousemove", (event) => {
+                            tooltip.style("top", (event.pageY - 10) + "px")
+                                .style("left", (event.pageX + 10) + "px");
+                        })
+                        .on("mouseout", () => {
+                            tooltip.style("visibility", "hidden");
+                        });
+                }
+
+                drawEducationMap("Ed2HSDiplomaOnlyPct");
+                drawEconomicMap();
+
+                d3.select("#educationToggle").on("change", function () {
+                    drawEducationMap(this.value);
+                });
+
+            }).catch(error => console.error("Error loading CSV:", error));
+        }).catch(error => console.error("Error loading TopoJSON:", error));
+
+    </script>
+</body>
+</html>
