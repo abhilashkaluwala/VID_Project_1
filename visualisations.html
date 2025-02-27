@@ -6,406 +6,612 @@
     <title>Education vs Economic Outcomes</title>
     <script src="https://d3js.org/d3.v6.min.js"></script>
     <script src="https://d3js.org/topojson.v3.min.js"></script>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap"> <!-- Roboto Font -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+
     <style>
-        body {
-            font-family: 'Roboto', Arial, sans-serif; /* Use Roboto, fallback to Arial */
-            margin: 0; /* Remove default body margin */
-            background-color: #f5f5f5; /* Light gray background */
-            color: #333; /* Dark gray text */
-            text-align: center; /* Center align text */
+       body {
+            font-family: 'Poppins', sans-serif; /* Consistent font */
+            margin: 0;
+            background-color: #f0f4f8; /* Light, soft background */
+            color: #333;
+            text-align: center;
         }
 
         .header {
-            background-color: #2196f3; /* Material Blue */
+           background-color: #6200ea; /* Consistent purple from landing */
             color: white;
-            padding: 20px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2); /* Subtle shadow */
-            margin-bottom: 20px;
+            padding: 25px 30px;
+            width: 100%;
+            text-align: center;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            margin-bottom: 30px; /* More space */
+            z-index: 10; /* Ensure header stays on top */
         }
         .header h1 {
-            margin: 0;
-            font-size: 2.5em; /* Larger heading */
-            font-weight: 500;
-        }
-
-        .header p {
-            margin: 10px 0 0 0; /* Some top margin for the paragraph */
-            font-size: 1.1em; /* Slightly larger font size */
-            line-height: 1.5;
-        }
-        .header-info {
-            display: flex;
-            justify-content: space-between;
-            align-items: center; /* Vertically align items */
-            padding: 10px;
-        }
-
-        .chart-container {
-            display: flex;
-            justify-content: space-around; /* Distribute space around charts */
-            flex-wrap: wrap; /* Allow wrapping to next line on smaller screens */
-            padding: 0 20px; /* Add some padding on the sides */
-        }
-
-        .chart {
-            margin: 20px;
-            background-color: white; /* White background for charts */
-            border-radius: 8px; /* Rounded corners */
-            box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24); /* Subtle shadow */
-            padding: 15px;
-            box-sizing: border-box; /* Include padding in width/height */
-            text-align: left; /* Align text to the left within the charts*/
-        }
-        .chart svg {
-            width: 100%;
-        }
-        .axis-label {
-            font-size: 14px;
-            font-weight: bold;
-            fill: #555;
+             margin: 0;
+             font-size: 3em; /* Larger heading */
+             font-weight: 600; /* Bolder heading */
         }
 
         .container {
             display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 30px;
+            gap: 40px; /* More space between map and chart sections */
+            justify-content: center;
+            flex-wrap: wrap; /* Wrap on smaller screens */
+            padding: 0 20px; /* Padding on the sides */
         }
-      .map-box {
-            border: 2px solid #ddd; /* Lighter border */
-            border-radius: 8px; /* Consistent rounded corners */
-            padding: 10px;
+
+        .map-section {
             position: relative;
-            width: 980px;
-            height: 620px;
+            width: 650px; /* Slightly larger map */
+            border-radius: 12px; /* Rounder corners */
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1); /* Consistent shadow */
+            padding: 20px;
+            background-color: white;
             overflow: hidden;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24); /* Consistent shadow */
+            transition: transform 0.3s ease; /* Smooth scaling */
+
+        }
+         .map-section:hover {
+            transform: scale(1.02); /* Slightly enlarge on hover */
+        }
+
+        .map-box {
+            position: relative;
+            width: 100%;
+            height: 550px; /* Larger map height */
         }
 
         .map-container {
-            position: relative;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.5s ease;
+        }
+
+        .map-container svg {
             width: 100%;
             height: 100%;
         }
-        .legend-container {
-            font-size: 12px;
-            margin-top: 10px;
+
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 0; /* More padding */
+            flex-wrap: wrap; /* Allow controls to wrap */
+        }
+
+       .control-button {
+            background-color: #6200ea;
+            color: white;
+            padding: 12px 18px; /* Larger buttons */
+            border: none;
+            border-radius: 25px; /* Pill-shaped buttons */
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            font-size: 1em; /* Slightly larger font */
+            font-weight: 500;
+            margin: 5px; /* Add margin for spacing */
+        }
+        .control-button:hover{
+            background-color: #4a00b3;
+            transform: scale(1.05); /* Slight scaling on hover */
+        }
+
+        .brush-button {
+            background-color: #087f23; /* Darker, more saturated green */
+            border: none;
+            color: white;
+            padding: 12px 18px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 1em;
+            margin: 5px; /* Consistent margin */
+            cursor: pointer;
+            border-radius: 25px;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+        }
+
+        .brush-button:hover {
+            background-color: #055f1a;
+             transform: scale(1.05);
+        }
+       .brush-button.active {
+             background-color: #055f1a; /* Darker green when active */
+            transform: scale(1.05);
+        }
+
+        .chart-section {
+            width: 450px; /* Slightly wider chart section */
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            padding: 20px;
+            position: relative;
+            overflow: hidden;
+             transition: transform 0.3s ease;
+        }
+       .chart-section:hover{
+             transform: scale(1.02); /* Slightly enlarge on hover */
+       }
+
+        #chartDisplay {
+            position: relative;
+            width: 100%;
+            height: 450px;  /* Increased height */
+        }
+        .chart{
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            transition: opacity 0.5s ease;
+            opacity: 1;
+        }
+
+        .chart.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+       .legend-container {
+            font-size: 0.9em; /* Slightly smaller font */
             display: flex;
             flex-direction: column;
             align-items: center;
             background: white;
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 8px;
-            box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
-            width: 320px;
-
+            padding: 15px; /* More padding */
+            border-radius: 10px;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.1); /* Softer shadow */
+            width: 100%;
+            margin-top: 15px;
+            transition: transform 0.3s ease;
         }
 
         .legend-svg {
-            width: 300px;
+            width: 100%;
+            max-width: 350px; /* Larger legend */
             height: 40px;
-        }
-        .tooltip {
-            position: absolute;
-            background: rgba(255, 255, 255, 0.95); /* Slightly transparent white */
-            padding: 8px;
-            border-radius: 5px;
-            box-shadow: 0px 0px 5px rgba(0,0,0,0.3);
-            font-size: 12px;
-            visibility: hidden;
-            border: 1px solid #ddd; /* Light border */
-            pointer-events: none; /* Important: Prevents tooltip from interfering with mouse events */
-            z-index: 10; /* Ensure tooltip is on top */
         }
 
         .toggle-container {
-            margin-bottom: 20px;
+            margin-bottom: 0; /* Remove margin */
             display: flex;
-            align-items: center;  /* Vertically center items */
-            justify-content: center; /* Horizontally center items */
+            align-items: center;
+            justify-content: center;
+            margin: 5px;
         }
 
         .toggle-container label {
-             margin-right: 10px; /* Spacing between label and select */
-             font-weight: 500;  /* Medium font weight for labels */
-         }
-
-         .toggle-container select {
-             padding: 8px 12px;  /* Comfortable padding */
-             border: 1px solid #ccc;  /* Light border */
-             border-radius: 4px;  /* Slightly rounded corners */
-             font-size: 16px;
-             background-color: white;
-             cursor: pointer;
-             appearance: none;  /* Remove default styling */
-             -webkit-appearance: none;
-             -moz-appearance: none;
-             background-image: url("data:image/svg+xml;utf8,<svg fill='black' height='24' viewBox='0 0 24 24' width='24' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/><path d='M0 0h24v24H0z' fill='none'/></svg>"); /* Custom dropdown arrow */
-             background-repeat: no-repeat;
-             background-position-x: 95%;  /* Position the arrow */
-             background-position-y: 50%;
+            margin-right: 10px;
+            font-weight: 500;
+             font-size: 0.9em; /* Slightly smaller font */
         }
+
+        .toggle-container select {
+            padding: 10px 15px; /* More padding */
+            border: 1px solid #ccc;
+            border-radius: 20px; /* Pill-shaped */
+            font-size: 0.9em;
+            background-color: white;
+            cursor: pointer;
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            background-image: url("data:image/svg+xml;utf8,<svg fill='%23333' height='24' viewBox='0 0 24 24' width='24' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/><path d='M0 0h24v24H0z' fill='none'/></svg>"); /* Darker arrow */
+            background-repeat: no-repeat;
+            background-position-x: 95%;
+            background-position-y: 50%;
+            transition: border-color 0.3s ease; /* Smooth border transition */
+        }
+        .toggle-container select:hover,
+        .toggle-container select:focus {
+            border-color: #6200ea; /* Highlight border on hover/focus */
+        }
+
+
         .map-title {
-            margin-bottom: .5rem;
-            font-size: 1.25rem;
-            font-weight: bold;
+            font-size: 1.5em; /* Larger title */
+            font-weight: 600;
+            margin-bottom: 10px; /* More space */
+             text-align: center; /* Center the map title */
         }
         .legend-title {
-            margin-bottom: .25rem;
             font-weight: 500;
+            margin-bottom: 5px;
+             font-size: 1em;
+        }
+
+        /* --- Tooltip and Brush --- */
+        .tooltip {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 10px; /* More padding */
+            border-radius: 8px; /* Rounder corners */
+            box-shadow: 0px 0px 8px rgba(0,0,0,0.3); /* Stronger shadow */
+            font-size: 0.9em;
+            visibility: hidden;
+            border: 1px solid #ddd;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .brush-overlay {
+            pointer-events: auto;
+            cursor: crosshair;
+        }
+
+        .brush {
+            stroke: #333; /* Darker stroke */
+            fill-opacity: .15; /* Slightly more opaque fill */
+            shape-rendering: crispEdges;
+        }
+        .axis-label {
+           font-size: 0.9em; /* Slightly smaller font */
+            font-weight: 500;
+            fill: #555;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+       /* Added Styles for Histograms and Scatterplot */
+        .chart h3 {
+            font-size: 1.2em;
+            font-weight: 600;
+            margin-bottom: 0.5em;
+            text-align: center; /* Center histogram titles */
         }
 
     </style>
 </head>
 <body>
+    <!-- Visualization Page -->
     <div class="header">
         <h1>Education vs Economic Outcomes</h1>
-         <div class="header-info">
-            <div><strong>Name:</strong> Abhilash</div>
-            <div><strong>Project Name:</strong> Education vs Economic Outcomes</div>
-            <div><strong>Framework used:</strong> D3.js</div>
-        </div>
-        <p>
-            This interactive visualization explores the relationship between education levels and economic indicators across US counties.  The maps allow you to compare different measures of education (high school diploma, some college, bachelor's degree) with various economic factors (median household income, poverty rate, per capita income).  Histograms provide a distribution of the selected variables, and the scatter plot shows the correlation between bachelor's degree attainment and median household income.  Explore the data to uncover insights into the impact of education on economic well-being.
-        </p>
-
     </div>
-
 
     <div class="container">
-        <!-- Education Map Section -->
         <div class="map-section">
-            <div class="toggle-container">
-                <label for="educationToggle">Select Education Level:</label>
-                <select id="educationToggle">
-                    <option value="Ed2HSDiplomaOnlyPct">High School Diploma (%)</option>
-                    <option value="Ed3SomeCollegePct">Some College (%)</option>
-                    <option value="Ed5CollegePlusPct">Bachelor's & Higher (%)</option>
-                </select>
+            <h3 class="map-title"></h3>
+            <div class="controls">
+                <button id="switchMapButton" class="control-button">Change Map</button>
+                <div class="toggle-container">
+                    <label for="attributeToggle">Switch Attribute:</label>
+                    <select id="attributeToggle">
+                         <!-- Options will be populated dynamically -->
+                    </select>
+                </div>
+                <button id="brushButton" class="control-button brush-button"><i class="fas fa-brush"></i></button>
             </div>
             <div class="map-box">
-              <h3 class="map-title">Education Level by County</h3>
-                <div class="map-container">
+                 <div id="educationMapContainer" class="map-container">
                     <svg id="educationMap" width="960" height="600"></svg>
                 </div>
-            </div>
-            <div class="legend-container">
-                <strong class="legend-title" id="educationLegendTitle"></strong>
-                <svg class="legend-svg" id="educationLegend"></svg>
-            </div>
-        </div>
-
-
-        <!-- Economic Map Section -->
-       <div class="map-section">
-            <div class="toggle-container">
-                <label for="economicToggle">Select Economic Indicator:</label>
-                <select id="economicToggle">
-                    <option value="Median_HH_Inc_ACS">Median Household Income ($)</option>
-                    <option value="Poverty_Rate_ACS">Poverty Rate (%)</option>
-                    <option value="PerCapitaInc">Per Capita Income ($)</option>
-                </select>
-            </div>
-
-            <div class="map-box">
-                <h3 class="map-title">Economic Indicator by County</h3>
-                <div class="map-container">
+                <div id="economicMapContainer" class="map-container" style="transform: translateX(100%);">
                     <svg id="economicMap" width="960" height="600"></svg>
                 </div>
-             </div>
-
-
+            </div>
             <div class="legend-container">
-                 <strong class="legend-title" id="economicLegendTitle"></strong>
-                <svg class="legend-svg" id="economicLegend"></svg>
+                <strong class="legend-title" id="legendTitle"></strong>
+                <svg class="legend-svg" id="legend"></svg>
             </div>
         </div>
 
+        <div class="chart-section">
+            <button id = "switchChartButton" class="control-button">view scatter plot</button>
+            <div id = "chartDisplay">
+                <div id="histograms" class="chart">
+                    <h3>Education Distribution</h3>
+                    <div id="histogramEducation"></div>
+                    <h3>Income Distribution</h3>
+                    <div id="histogramIncome"></div>
+                </div>
+                <div id="scatterplot" class="chart hidden"> </div>
+            </div>
+
+        </div>
     </div>
+
 
     <div class="tooltip" id="tooltip"></div>
 
-    <div class="chart-container">
-        <div id="histogramEducation" class="chart">
-            <h3>Education Distribution</h3>
-        </div>
-        <div id="histogramIncome" class="chart">
-          <h3>Income Distribution</h3>
-        </div>
-    </div>
-    
-    <div id="scatterplot" class="chart">
-        <h3>Bachelor's Degree vs. Median Household Income</h3>
-    </div>
-
     <script>
-        d3.csv("data.csv").then(function(data) {
+// --- Global Variables ---
+        let countyData, data, countyMap;
+        let brushActive = false;
+        let selectedCounties = new Set();
+        let currentMap = "education"; // 'education' or 'economic'
+        let currentAttribute = "Ed5CollegePlusPct"; // Initial attribute.  Good practice to initialize.
+        let showScatterPlot = false; // Initially show histograms
+        let educationBrush, economicBrush; //brush instances
+
+        d3.csv("data.csv").then(function (csvData) {
+            data = csvData;
             data.forEach(d => {
+                d.Ed2HSDiplomaOnlyPct = +d.Ed2HSDiplomaOnlyPct;
+                d.Ed3SomeCollegePct = +d.Ed3SomeCollegePct;
                 d.Ed5CollegePlusPct = +d.Ed5CollegePlusPct;
                 d.Median_HH_Inc_ACS = +d.Median_HH_Inc_ACS;
+                d.Poverty_Rate_ACS = +d.Poverty_Rate_ACS;
+                d.PerCapitaInc = +d.PerCapitaInc;
             });
 
+            countyMap = {};
+            data.forEach(d => {
+                let fipsCode = d.FIPS.padStart(5, '0');
+                countyMap[fipsCode] = {
+                    County: d.County,
+                    State: d.State,
+                    Ed2HSDiplomaOnlyPct: +d.Ed2HSDiplomaOnlyPct || 0,
+                    Ed3SomeCollegePct: +d.Ed3SomeCollegePct || 0,
+                    Ed5CollegePlusPct: +d.Ed5CollegePlusPct || 0,
+                    Median_HH_Inc_ACS: +d.Median_HH_Inc_ACS || 20000,
+                    Poverty_Rate_ACS: +d.Poverty_Rate_ACS || 0,
+                    PerCapitaInc: +d.PerCapitaInc || 15000
+                };
+            });
+
+            // Initial chart creation (histograms)
             createHistogram(data, "Ed5CollegePlusPct", "#histogramEducation", "% with Bachelor's Degree or Higher");
             createHistogram(data, "Median_HH_Inc_ACS", "#histogramIncome", "Median Household Income ($)");
-            createScatterPlot(data);
+            createScatterPlot(data); // Create scatterplot but keep it hidden initially
+
+            // Populate attribute dropdown
+            populateAttributeDropdown();
+
+            d3.json("us_counties.json").then(loadedCountyData => {
+                countyData = loadedCountyData;
+                initializeMaps();  // Initialize maps *after* data load
+                updateMaps();  // *Then* draw the initial map
+
+                // --- Event Listeners ---
+                document.getElementById("switchMapButton").addEventListener("click", () => {
+                    currentMap = (currentMap === "education") ? "economic" : "education";
+                    updateMaps();
+                });
+
+                document.getElementById("brushButton").addEventListener("click", () => {
+                    brushActive = !brushActive;
+                    document.getElementById("brushButton").classList.toggle("active", brushActive);
+
+                    const currentSvg = (currentMap === "education") ? educationSvg : economicSvg;
+
+                    if (brushActive) {
+                        currentSvg.classed("brush-overlay", true);
+                        if (currentMap === "education") {
+                            educationBrush = addBrush(educationSvg);
+                        } else {
+                            economicBrush = addBrush(economicSvg);
+                        }
+                    } else {
+                        currentSvg.classed("brush-overlay", false);
+                        if (currentMap === "education") {
+                            removeBrush(educationSvg, educationBrush);
+                        } else {
+                            removeBrush(economicSvg, economicBrush);
+                        }
+                        selectedCounties.clear(); // Clear selection when brush is deactivated.
+                        updateHistograms(); // update histograms after clearing.
+                    }
+                });
+
+                document.getElementById("switchChartButton").addEventListener("click", () => {
+                    showScatterPlot = !showScatterPlot;
+                    document.getElementById("switchChartButton").textContent = showScatterPlot ? "View Histograms" : "View Scatter Plot";
+                    document.getElementById("histograms").classList.toggle("hidden", showScatterPlot);
+                    document.getElementById("scatterplot").classList.toggle("hidden", !showScatterPlot);
+                });
+
+                 // Add change listener for attribute toggle
+                document.getElementById("attributeToggle").addEventListener("change", () => {
+                    currentAttribute = document.getElementById("attributeToggle").value;
+                     updateMaps();
+                });
+
+            });
         });
 
-      function createHistogram(data, key, container, xlabel) {
-          const margin = { top: 20, right: 30, bottom: 50, left: 50 },
-                width = 400 - margin.left - margin.right,
-                height = 300 - margin.top - margin.bottom;
 
-          const svg = d3.select(container)
-              .append("svg")
-              .attr("width", width + margin.left + margin.right)
-              .attr("height", height + margin.top + margin.bottom)
-              .append("g")
-              .attr("transform", `translate(${margin.left},${margin.top})`);
+     function populateAttributeDropdown() {
+            const attributeToggle = document.getElementById("attributeToggle");
+            attributeToggle.innerHTML = ""; // Clear existing options
 
-          const tooltip = d3.select("#tooltip"); // Use the existing tooltip
+            if (currentMap === "education") {
+                for (const key in educationCategories) {
+                    const option = document.createElement("option");
+                    option.value = key;
+                    option.text = educationCategories[key];
+                    if (key === currentAttribute) option.selected = true; //restore selection
+                    attributeToggle.add(option);
+                }
+            } else { // currentMap === "economic"
+                for (const key in economicCategories) {
+                    const option = document.createElement("option");
+                    option.value = key;
+                    option.text = economicCategories[key];
+                   if (key === currentAttribute) option.selected = true; //restore selection
+                    attributeToggle.add(option);
+                }
+            }
+        }
 
-          const x = d3.scaleLinear()
-              .domain(d3.extent(data, d => d[key]))
-              .nice()
-              .range([0, width]);
+        function initializeMaps() {
+            educationSvg = initializeZoom("#educationMap");
+            economicSvg = initializeZoom("#economicMap");
+            projection = d3.geoAlbersUsa().scale(750).translate([300, 250]);
+            path = d3.geoPath().projection(projection);
+        }
 
-          const bins = d3.histogram()
-              .domain(x.domain())
-              .thresholds(x.ticks(20))
-              (data.map(d => d[key]));
+        // --- Chart Functions ---
+        function createHistogram(data, key, container, xlabel) {
+        d3.select(container).selectAll("*").remove();
 
-          const y = d3.scaleLinear()
-              .domain([0, d3.max(bins, d => d.length)])
-              .nice()
-              .range([height, 0]);
+        const margin = { top: 20, right: 30, bottom: 50, left: 50 },
+              width = 400 - margin.left - margin.right -40, // correct the width
+              height = 150 - margin.top - margin.bottom; // Reduced height
 
-          svg.append("g")
-              .selectAll("rect")
-              .data(bins)
-              .enter().append("rect")
-              .attr("x", d => x(d.x0))
-              .attr("y", d => y(d.length))
-              .attr("width", d => x(d.x1) - x(d.x0) - 1)
-              .attr("height", d => height - y(d.length))
-              .attr("fill", "steelblue")
-              .on("mouseover", (event, d) => {
-                  // Get all counties in this bin
-                  let countiesInBin = data.filter(item => item[key] >= d.x0 && item[key] < d.x1)
-                                          .map(item => `${item.County}, ${item.State}`); // County + State
+        const svg = d3.select(container)
+            .append("svg")
+            .attr("width", width + margin.left + margin.right)
+            .attr("height", height + margin.top + margin.bottom)
+            .append("g")
+            .attr("transform", `translate(${margin.left},${margin.top})`);
 
-                  let countyList = countiesInBin.length > 10
-                      ? countiesInBin.slice(0, 10).join("<br>") + "<br>..."  // Show only first 10
-                      : countiesInBin.join("<br>");
+       const x = d3.scaleLinear()
+          .domain(d3.extent(data, d => d[key]))
+          .nice()
+          .range([0, width]);
 
-                  tooltip.style("visibility", "visible")
-                      .html(`<strong>Range:</strong> ${d.x0.toFixed(1)} - ${d.x1.toFixed(1)}<br>
-                             <strong>Count:</strong> ${d.length} counties<br>
-                             <strong>Sample Counties:</strong><br>${countyList}`);
+        const bins = d3.histogram()
+            .domain(x.domain())
+            .thresholds(x.ticks(20))
+            (data.map(d => d[key]));
+
+        const y = d3.scaleLinear()
+            .domain([0, d3.max(bins, d => d.length)])
+            .nice()
+            .range([height, 0]);
+
+        svg.append("g")
+            .selectAll("rect")
+            .data(bins)
+            .enter().append("rect")
+            .attr("x", d => x(d.x0))
+            .attr("y", d => y(d.length))
+            .attr("width", d => Math.max(0, x(d.x1) - x(d.x0) - 1)) // Ensure width is not negative
+            .attr("height", d => height - y(d.length))
+            .attr("fill", "steelblue")
+            .on("mouseover", (event, d) => { // Use the existing tooltip
+                let countiesInBin = data.filter(item => item[key] >= d.x0 && item[key] < d.x1)
+                                        .map(item => `${item.County}, ${item.State}`);
+                let countyList = countiesInBin.length > 10
+                    ? countiesInBin.slice(0, 10).join("<br>") + "<br>..."
+                    : countiesInBin.join("<br>");
+                const tooltip = d3.select("#tooltip");
+                tooltip.style("visibility", "visible")
+                    .html(`<strong>Range:</strong> ${d.x0.toFixed(1)} - ${d.x1.toFixed(1)}<br>
+                           <strong>Count:</strong> ${d.length} counties<br>
+                           <strong>Sample Counties:</strong><br>${countyList}`);
+            })
+            .on("mousemove", (event) => {
+                const tooltip = d3.select("#tooltip");
+                  tooltip.style("top", (event.pageY - 10) + "px")
+                      .style("left", (event.pageX + 10) + "px");
               })
-              .on("mousemove", (event) => {
-                    tooltip.style("top", (event.pageY - 10) + "px")
-                        .style("left", (event.pageX + 10) + "px");
+            .on("mouseout", () => {
+                const tooltip = d3.select("#tooltip");
+                tooltip.style("visibility", "hidden");
+            });
+
+
+        svg.append("g")
+            .attr("transform", `translate(0,${height})`)
+            .call(d3.axisBottom(x));
+
+        svg.append("g")
+            .call(d3.axisLeft(y).ticks(5)); // Fewer ticks for smaller height
+
+        svg.append("text")
+            .attr("x", width / 2)
+            .attr("y", height + 40)
+            .attr("text-anchor", "middle")
+            .attr("class", "axis-label")
+            .text(xlabel);
+
+        svg.append("text")
+            .attr("x", -height / 2)
+            .attr("y", -35)
+            .attr("transform", "rotate(-90)")
+            .attr("text-anchor", "middle")
+            .attr("class", "axis-label")
+            .text("Number of Counties");
+    }
+
+
+
+        function createScatterPlot(data) {
+            const container = d3.select("#scatterplot");
+            container.selectAll("*").remove(); // Clear previous content
+
+            const margin = {top: 20, right: 30, bottom: 50, left: 50},
+                width = 450 - margin.left - margin.right,  // Adjusted width
+                height = 400 - margin.top - margin.bottom; // Adjusted height
+
+            const svg = container.append("svg")
+                .attr("width", width + margin.left + margin.right)
+                .attr("height", height + margin.top + margin.bottom)
+              .append("g")
+                .attr("transform", `translate(${margin.left}, ${margin.top})`);
+
+            const x = d3.scaleLinear()
+                .domain(d3.extent(data, d => d.Ed5CollegePlusPct))
+                .nice()
+                .range([0, width]);
+
+            const y = d3.scaleLinear()
+                .domain(d3.extent(data, d => d.Median_HH_Inc_ACS))
+                .nice()
+                .range([height, 0]);
+
+            svg.append("g")
+                .attr("transform", `translate(0, ${height})`)
+                .call(d3.axisBottom(x));
+
+            svg.append("g")
+                .call(d3.axisLeft(y));
+
+            svg.append("text")
+                .attr("class", "axis-label")
+                .attr("x", width / 2)
+                .attr("y", height + margin.bottom - 10)
+                .attr("text-anchor", "middle")
+                .text("% with Bachelor's Degree or Higher");
+
+            svg.append("text")
+                .attr("class", "axis-label")
+                .attr("transform", "rotate(-90)")
+                .attr("y", -margin.left)
+                .attr("x", -height / 2)
+                .attr("dy", "1em")
+                .style("text-anchor", "middle")
+                .text("Median Household Income ($)");
+
+            svg.selectAll("circle")
+                .data(data)
+              .enter().append("circle")
+                .attr("cx", d => x(d.Ed5CollegePlusPct))
+                .attr("cy", d => y(d.Median_HH_Inc_ACS))
+                .attr("r", 4) // Slightly larger radius
+                .attr("fill", "#6200ea") // Consistent purple
+                .attr("opacity", 0.7)
+                .on("mouseover", (event, d) => {
+                    const tooltip = d3.select("#tooltip");
+                    tooltip.style("visibility", "visible")
+                        .html(`<strong>${d.County}, ${d.State}</strong><br>
+                               <strong>Bachelor's & Higher:</strong> ${d.Ed5CollegePlusPct}%<br>
+                               <strong>Income:</strong> $${d.Median_HH_Inc_ACS.toLocaleString()}`);
                 })
-              .on("mouseout", () => {
-                  tooltip.style("visibility", "hidden");
-              });
+                .on("mousemove", (event) => {
+                    const tooltip = d3.select("#tooltip");
+                      tooltip.style("top", (event.pageY - 10) + "px")
+                          .style("left", (event.pageX + 10) + "px");
+                  })
+                .on("mouseout", () => {
+                    const tooltip = d3.select("#tooltip");
+                    tooltip.style("visibility", "hidden");
+                });
+        }
 
-          svg.append("g")
-              .attr("transform", `translate(0,${height})`)
-              .call(d3.axisBottom(x));
+       // --- Map and Legend Functions ---
 
-          svg.append("g")
-              .call(d3.axisLeft(y));
-
-          svg.append("text")
-              .attr("x", width / 2)
-              .attr("y", height + 40)
-              .attr("text-anchor", "middle")
-              .attr("class", "axis-label")
-              .text(xlabel);
-
-          svg.append("text")
-              .attr("x", -height / 2)
-              .attr("y", -35)
-              .attr("transform", "rotate(-90)")
-              .attr("text-anchor", "middle")
-              .attr("class", "axis-label")
-              .text("Number of Counties");
-      }
-
-
-
-function createScatterPlot(data) {
-    const margin = { top: 20, right: 30, bottom: 50, left: 50 },
-          width = 500 - margin.left - margin.right,
-          height = 400 - margin.top - margin.bottom;
-
-    const svg = d3.select("#scatterplot")
-        .append("svg")
-        .attr("width", width + margin.left + margin.right)
-        .attr("height", height + margin.top + margin.bottom)
-        .append("g")
-        .attr("transform", `translate(${margin.left},${margin.top})`);
-
-    const tooltip = d3.select("#tooltip"); // Re-use the existing tooltip
-
-
-    const x = d3.scaleLinear()
-        .domain(d3.extent(data, d => d.Ed5CollegePlusPct))
-        .nice()
-        .range([0, width]);
-
-    const y = d3.scaleLinear()
-        .domain(d3.extent(data, d => d.Median_HH_Inc_ACS))
-        .nice()
-        .range([height, 0]);
-
-    svg.append("g")
-        .attr("transform", `translate(0,${height})`)
-        .call(d3.axisBottom(x));
-
-    svg.append("g")
-        .call(d3.axisLeft(y));
-
-    svg.append("text")
-        .attr("x", width / 2)
-        .attr("y", height + 40)
-        .attr("text-anchor", "middle")
-        .attr("class", "axis-label")
-        .text("% with Bachelor's Degree or Higher");
-
-    svg.append("text")
-        .attr("x", -height / 2)
-        .attr("y", -35)
-        .attr("transform", "rotate(-90)")
-        .attr("text-anchor", "middle")
-        .attr("class", "axis-label")
-        .text("Median Household Income ($)");
-
-    svg.selectAll("circle")
-        .data(data)
-        .enter().append("circle")
-        .attr("cx", d => x(d.Ed5CollegePlusPct))
-        .attr("cy", d => y(d.Median_HH_Inc_ACS))
-        .attr("r", 3)
-        .attr("fill", "steelblue")
-        .attr("opacity", 0.7)
-        .on("mouseover", (event, d) => {
-            tooltip.style("visibility", "visible")
-                .html(`<strong>${d.County}, ${d.State}</strong><br>
-                       <strong>Bachelor's & Higher:</strong> ${d.Ed5CollegePlusPct}%<br>
-                       <strong>Income:</strong> $${d.Median_HH_Inc_ACS.toLocaleString()}`);
-        })
-        .on("mousemove", (event) => {
-              tooltip.style("top", (event.pageY - 10) + "px")
-                  .style("left", (event.pageX + 10) + "px");
-          })
-        .on("mouseout", () => {
-            tooltip.style("visibility", "hidden");
-        });
-}
         const educationCategories = {
             "Ed2HSDiplomaOnlyPct": "High School Diploma (%)",
             "Ed3SomeCollegePct": "Some College (%)",
@@ -417,8 +623,6 @@ function createScatterPlot(data) {
             "Poverty_Rate_ACS": "Poverty Rate (%)",
             "PerCapitaInc": "Per Capita Income ($)"
         };
-
-        const width = 960, height = 600;
 
         const educationColor = d3.scaleSequential(d3.interpolateBlues).domain([0, 100]);
         const economicColors = {
@@ -440,107 +644,229 @@ function createScatterPlot(data) {
             return g;
         }
 
-        const educationSvg = initializeZoom("#educationMap");
-        const economicSvg = initializeZoom("#economicMap");
-        //const tooltip = d3.select("#tooltip"); //moved to the individual chart
-        const projection = d3.geoAlbersUsa().scale(1300).translate([width / 2, height / 2]);
-        const path = d3.geoPath().projection(projection);
+        let educationSvg, economicSvg, projection, path;
 
-        d3.json("us_counties.json").then(countyData => {
-            d3.csv("data.csv").then(data => {
+        function drawMap(selectedCategory, g, colorScale, legendSvgId, legendTitleId, categoryLabels) {
+            g.selectAll("*").remove();  // Clear previous map elements
+            g.selectAll("path")
+                .data(topojson.feature(countyData, countyData.objects.counties).features)
+                .enter().append("path")
+                .attr("d", d => path(d) || "") // Handle potentially null paths
+                .attr("fill", d => {
+                    let county = countyMap[d.id];
+                    return county ? colorScale(county[selectedCategory]) : "#ccc"; // Fallback color
+                })
+                .attr("stroke", "#999")
+                .on("mouseover", (event, d) => {
+                    if (brushActive) return; // No tooltips during brushing
 
-                let countyMap = {};
-                data.forEach(d => {
-                    let fipsCode = d.FIPS.padStart(5, '0');
-                    countyMap[fipsCode] = {
-                        County: d.County,
-                        State: d.State,
-                        Ed2HSDiplomaOnlyPct: +d.Ed2HSDiplomaOnlyPct || 0,
-                        Ed3SomeCollegePct: +d.Ed3SomeCollegePct || 0,
-                        Ed5CollegePlusPct: +d.Ed5CollegePlusPct || 0,
-                        Median_HH_Inc_ACS: +d.Median_HH_Inc_ACS || 20000,
-                        Poverty_Rate_ACS: +d.Poverty_Rate_ACS || 0,
-                        PerCapitaInc: +d.PerCapitaInc || 15000
-                    };
+                    let county = countyMap[d.id];
+                    let value = county ? county[selectedCategory] : "No Data";
+                    const tooltip = d3.select("#tooltip");
+                    tooltip.style("visibility", "visible")
+                        .html(`<strong>${county ? county.County + ", " + county.State : "Unknown"}</strong><br>${categoryLabels[selectedCategory]}: ${value.toLocaleString()}`);
+                })
+                .on("mousemove", (event) => {
+                    if (brushActive) return;
+                    const tooltip = d3.select("#tooltip");
+                    tooltip.style("top", (event.pageY - 10) + "px")
+                        .style("left", (event.pageX + 10) + "px");
+                })
+                .on("mouseout", () => {
+                    if (brushActive) return;
+                    const tooltip = d3.select("#tooltip");
+                    tooltip.style("visibility", "hidden");
                 });
-              function drawMap(selectedCategory, g, colorScale, legendSvgId, legendTitleId, categoryLabels) {
-                  g.selectAll("*").remove();
-                  g.selectAll("path")
-                      .data(topojson.feature(countyData, countyData.objects.counties).features)
-                      .enter().append("path")
-                      .attr("d", d => path(d) || "") // Handle null paths
-                      .attr("fill", d => {
-                          let county = countyMap[d.id];
-                          if (county) {
-                            return colorScale(county[selectedCategory])
-                          } else {
-                            console.warn("Missing data for county ID:", d.id);
-                            return "#ccc"; // Consistent fallback color
-                          }
-
-                      })
-                      .attr("stroke", "#999")
-                      .on("mouseover", (event, d) => {
-                          let county = countyMap[d.id];
-                          let value = county ? county[selectedCategory] : "No Data";
-                          const tooltip = d3.select("#tooltip");
-                          tooltip.style("visibility", "visible")
-                              .html(`<strong>${county ? county.County + ", " + county.State : "Unknown"}</strong><br>${categoryLabels[selectedCategory]}: ${value.toLocaleString()}`);
-                      })
-                      .on("mousemove", (event) => {
-                            const tooltip = d3.select("#tooltip");
-                            tooltip.style("top", (event.pageY - 10) + "px")
-                                .style("left", (event.pageX + 10) + "px");
-                        })
-                      .on("mouseout", () => {
-                        const tooltip = d3.select("#tooltip");
-                          tooltip.style("visibility", "hidden");
-                      });
-              }
+        }
 
 
-              function drawLegend(legendSvgId, legendTitleId, colorScale, min, max, label) {
-                  d3.select(legendTitleId).text(label); // Update title text
-                  const legendSvg = d3.select(legendSvgId);
-                  legendSvg.selectAll("*").remove(); // Clear previous legend
+        function drawLegend(legendSvgId, legendTitleId, colorScale, min, max, label) {
+            d3.select(legendTitleId).text(label);
+            const legendSvg = d3.select(legendSvgId);
+            legendSvg.selectAll("*").remove();
 
-                  const defs = legendSvg.append("defs");
-                  const linearGradient = defs.append("linearGradient")
-                      .attr("id", legendSvgId + "-gradient")
-                      .attr("x1", "0%")
-                      .attr("x2", "100%");
+            const defs = legendSvg.append("defs");
+            const linearGradient = defs.append("linearGradient")
+                .attr("id", legendSvgId + "-gradient")
+                .attr("x1", "0%")
+                .attr("x2", "100%");
 
-                  linearGradient.append("stop").attr("offset", "0%").attr("stop-color", colorScale(min));
-                  linearGradient.append("stop").attr("offset", "100%").attr("stop-color", colorScale(max));
+            linearGradient.append("stop").attr("offset", "0%").attr("stop-color", colorScale(min));
+            linearGradient.append("stop").attr("offset", "100%").attr("stop-color", colorScale(max));
 
-                  legendSvg.append("rect")
-                      .attr("width", 300)
-                      .attr("height", 15)
-                      .attr("fill", `url(#${legendSvgId}-gradient)`);
+            legendSvg.append("rect")
+                .attr("width", "100%")
+                .attr("height", 15)
+                .attr("fill", `url(#${legendSvgId}-gradient)`);
 
-                  legendSvg.append("text").attr("x", 0).attr("y", 30).text(min.toLocaleString());
-                  legendSvg.append("text").attr("x", 270).attr("y", 30).text(max.toLocaleString());
-              }
+            legendSvg.append("text").attr("x", 0).attr("y", 30).text(min.toLocaleString());
+            legendSvg.append("text").attr("x", legendSvg.node().getBBox().width - 30).attr("y", 30).text(max.toLocaleString());
+        }
 
 
-                function updateMaps() {
-                    let selectedEducation = document.getElementById("educationToggle").value;
-                    let selectedEconomic = document.getElementById("economicToggle").value;
+        function updateMaps() {
+    const isEducation = educationCategories.hasOwnProperty(currentAttribute);
+    const colorScale = isEducation ? educationColor : economicColors[currentAttribute];
+    const categories = isEducation ? educationCategories : economicCategories;
+    document.querySelector(".map-title").textContent = isEducation ? "Education Level by County" : "Economic Indicator by County";
 
-                    drawMap(selectedEducation, educationSvg, educationColor, "#educationLegend", "#educationLegendTitle", educationCategories);
-                    drawMap(selectedEconomic, economicSvg, economicColors[selectedEconomic], "#economicLegend", "#economicLegendTitle", economicCategories);
+    let min, max;
+    if (isEducation) {
+        min = 0;
+        max = 100;
+    } else {
+        min = colorScale.domain()[0];
+        max = colorScale.domain()[1];
+    }
 
-                    drawLegend("#educationLegend", "#educationLegendTitle", educationColor, 0, 100, educationCategories[selectedEducation]);
-                    drawLegend("#economicLegend", "#economicLegendTitle", economicColors[selectedEconomic], economicColors[selectedEconomic].domain()[0], economicColors[selectedEconomic].domain()[1], economicCategories[selectedEconomic]);
+    if (currentMap === "education") {
+        drawMap(currentAttribute, educationSvg, colorScale, "#legend", "#legendTitle", categories);
+        // Moved drawLegend *AFTER* drawMap, and *INSIDE* the if block
+        drawLegend("#legend", "#legendTitle", colorScale, min, max, categories[currentAttribute]);
+        d3.select("#educationMapContainer").style("transform", "translateX(0%)");
+        d3.select("#economicMapContainer").style("transform", "translateX(100%)");
+    } else {
+        drawMap(currentAttribute, economicSvg, colorScale, "#legend", "#legendTitle", categories);
+        // Moved drawLegend *AFTER* drawMap, and *INSIDE* the else block
+        drawLegend("#legend", "#legendTitle", colorScale, min, max, categories[currentAttribute]);
+        d3.select("#economicMapContainer").style("transform", "translateX(0%)");
+        d3.select("#educationMapContainer").style("transform", "translateX(100%)");
+    }
+
+    // Update the attribute dropdown whenever the map changes
+    populateAttributeDropdown();
+}
+        // --- Brush Functions ---
+
+        function addBrush(svg) {
+            const brush = d3.brush()
+                .extent([[0, 0], [600, 500]])  // Use map-box dimensions
+                .on("start brush end", brushed);
+
+            const gBrush = svg.append("g")
+                .attr("class", "brush")
+                .call(brush);
+
+            function brushed(event) {
+                if (event.selection) {
+                    const [[x0, y0], [x1, y1]] = event.selection;
+                    selectedCounties.clear();
+
+                    svg.selectAll("path").each(function (d) {
+                        if (!d) return;
+                        const bounds = path.bounds(d);
+                        if (!bounds) return;
+
+                        const [[bx0, by0], [bx1, by1]] = bounds;
+
+                        if (bx1 >= x0 && bx0 <= x1 && by1 >= y0 && by0 <= y1) {
+                            if (countyMap[d.id]) {
+                                selectedCounties.add(d.id);
+                            }
+                        }
+                    });
+                    updateHistograms();
+                }
+                if(event.type ==="end"){
+                    if (!event.selection) {
+                        selectedCounties.clear();
+                        updateHistograms();
+                    }
                 }
 
+            }
+            return brush;
+        }
 
-                document.getElementById("educationToggle").addEventListener("change", updateMaps);
-                document.getElementById("economicToggle").addEventListener("change", updateMaps);
+        function removeBrush(svg, brush) {
+            if (brush) {
+                svg.select(".brush").remove();
+            }
+        }
 
-                updateMaps(); // Initial draw
-            });
+        function updateHistograms() {
+    let filteredData;
+
+    if (selectedCounties.size > 0) {
+        filteredData = data.filter(d => selectedCounties.has(d.FIPS.padStart(5, '0')));
+    } else {
+        filteredData = data;
+    }
+
+    createHistogram(filteredData, "Ed5CollegePlusPct", "#histogramEducation", "% with Bachelor's Degree or Higher");
+    createHistogram(filteredData, "Median_HH_Inc_ACS", "#histogramIncome", "Median Household Income ($)");
+    // Don't update scatterplot here; it's separate
+}
+
+function drawMap(selectedCategory, g, colorScale, legendSvgId, legendTitleId, categoryLabels) {
+    g.selectAll("*").remove();  // Clear previous map elements
+    g.selectAll("path")
+        .data(topojson.feature(countyData, countyData.objects.counties).features)
+        .enter().append("path")
+        .attr("d", d => path(d) || "") // Handle potentially null paths
+        .attr("fill", d => {
+            let county = countyMap[d.id];
+            return county ? colorScale(county[selectedCategory]) : "#ccc"; // Fallback color
+        })
+        .attr("stroke", "#999")
+        .on("mouseover", (event, d) => {
+            if (brushActive) return; // No tooltips during brushing
+
+            let county = countyMap[d.id];
+            let value = county ? county[selectedCategory] : "No Data";
+            const tooltip = d3.select("#tooltip");
+            tooltip.style("visibility", "visible")
+                .html(`<strong>${county ? county.County + ", " + county.State : "Unknown"}</strong><br>${categoryLabels[selectedCategory]}: ${value.toLocaleString()}`);
+        })
+        .on("mousemove", (event) => {
+            if (brushActive) return;
+            const tooltip = d3.select("#tooltip");
+            tooltip.style("top", (event.pageY - 10) + "px")
+                .style("left", (event.pageX + 10) + "px");
+        })
+        .on("mouseout", () => {
+            if (brushActive) return;
+            const tooltip = d3.select("#tooltip");
+            tooltip.style("visibility", "hidden");
         });
-    </script>
+}
+
+function drawLegend(legendSvgId, legendTitleId, colorScale, min, max, label) {
+    d3.select(legendTitleId).text(label);
+    const legendSvg = d3.select(legendSvgId);
+    legendSvg.selectAll("*").remove();
+
+    const defs = legendSvg.append("defs");
+    const linearGradient = defs.append("linearGradient")
+        .attr("id", legendSvgId + "-gradient")
+        .attr("x1", "0%")
+        .attr("x2", "100%");
+
+    linearGradient.append("stop").attr("offset", "0%").attr("stop-color", colorScale(min));
+    linearGradient.append("stop").attr("offset", "100%").attr("stop-color", colorScale(max));
+
+    legendSvg.append("rect")
+        .attr("width", "100%") // Use percentage for responsiveness
+        .attr("height", 15)
+        .attr("fill", `url(#${legendSvgId}-gradient)`);
+
+    legendSvg.append("text").attr("x", 0).attr("y", 30).text(min.toLocaleString());
+    legendSvg.append("text").attr("x", legendSvg.node().getBBox().width - 30).attr("y", 30).text(max.toLocaleString());
+}
+
+function initializeZoom(mapId) {
+    const svg = d3.select(mapId);
+    const g = svg.append("g"); // Append a group element
+    const zoom = d3.zoom()
+        .scaleExtent([1, 5]) // Set zoom limits
+        .on("zoom", (event) => {
+            g.attr("transform", event.transform); // Apply transform to the group
+        });
+
+    svg.call(zoom);
+    return g; // Return the group element
+}
+
+</script>
 </body>
-</html>
+

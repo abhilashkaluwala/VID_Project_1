@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Education vs Economic Outcomes</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif; /* More modern font */
+            margin: 0;
+            background-color: #f0f4f8; /* Lighter, softer background */
+            color: #333;
+            text-align: center;
+            overflow: hidden; /* Prevent scrollbars during animation */
+        }
+
+        .landing-page {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            position: relative; /* For absolute positioning of animated elements */
+        }
+
+        .landing-header {
+            background-color: #6200ea; /* Bolder purple */
+            color: white;
+            padding: 25px 30px;  /* More padding */
+            width: 100%;
+            text-align: center;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Stronger shadow */
+            z-index: 2; /* Ensure header is above other elements */
+            position: relative; /* For potential animations later */
+        }
+         .landing-header h1 {
+            font-size: 3em; /* Larger, bolder title */
+            margin-bottom: 0.2em; /* Space between title and subheadings */
+            font-weight: 600;
+            animation: fadeInDown 1s ease forwards;
+        }
+
+        .landing-header h3 {
+            font-size: 1.5em;
+            font-weight: 400;
+            margin: 0.2em 0; /* Consistent spacing */
+             animation: fadeInUp 1s ease forwards;
+             animation-delay: 0.2s;  /* Stagger animation */
+        }
+
+        .landing-content {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            width: 80%;
+            max-width: 1200px;
+            margin-top: 50px; /* More space */
+             opacity: 0; /* Start invisible */
+            animation: fadeIn 1.5s ease forwards; /* Fade in */
+            animation-delay: 0.5s;  /* Delay the fade-in */
+        }
+
+        .landing-text {
+            background-color: white;
+            padding: 30px 40px; /* More padding */
+            border-radius: 12px; /* Rounder corners */
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            text-align: left;
+            flex: 1;
+            margin-right: 40px; /* More space */
+            max-width: 600px; /* Limit text width for readability */
+            animation: slideInFromLeft 1s ease forwards;
+        }
+
+        .landing-text p {
+             font-size: 1.1em;
+            line-height: 1.6; /* Better line spacing for readability */
+        }
+
+        .landing-button-container {
+            flex-shrink: 0;
+             animation: slideInFromRight 1s ease forwards; /*Different animation*/
+        }
+
+        .landing-button {
+            background-color: #6200ea; /* Consistent purple */
+            color: white;
+            padding: 18px 35px; /* Larger button */
+            border: none;
+            border-radius: 30px; /* Pill-shaped button */
+            font-size: 1.2em;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease; /* Add transform transition */
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            text-decoration: none; /*Remove the underline*/
+            display: inline-block; /*For the animation and the link*/
+        }
+
+
+
+        .landing-button:hover {
+            background-color: #4a00b3; /* Darker on hover */
+            transform: scale(1.05); /* Slightly enlarge on hover */
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3); /* Increased shadow on hover*/
+        }
+
+        /* --- Animated Background Elements --- */
+        .circle {
+            position: absolute;
+            border-radius: 50%;
+            opacity: 0.3;
+            animation: float 8s ease-in-out infinite;
+        }
+
+        .circle-1 {
+            width: 150px;
+            height: 150px;
+            background-color: #9fa8da; /* Soft blue */
+            top: 10%;
+            left: 10%;
+            animation-delay: 0s;
+        }
+        .circle-2 {
+            width: 80px;
+            height: 80px;
+            background-color: #b39ddb; /* Light purple */
+            bottom: 20%;
+            right: 15%;
+            animation-delay: 2s;
+        }
+
+        .circle-3 {
+            width: 120px;
+            height: 120px;
+            background-color: #c5cae9; /* Lighter blue */
+            top: 40%;
+            right: 30%;
+            animation-delay: 4s;
+        }
+        .circle-4 {
+            width: 60px;
+            height: 60px;
+            background-color: #90caf9;
+            bottom: 10%;
+            left: 40%;
+            animation-delay: 6s;
+        }
+
+
+         /* --- Keyframes Animations --- */
+         /*Keyframes Animations:
+        fadeIn: Makes elements fade in smoothly.
+        fadeInDown: Makes elements fade in and move down slightly.
+        fadeInUp: Makes elements fade in and move up slightly.
+        slideInFromLeft and slideInFromRight: Make elements slide in from the sides.
+        float: Creates a gentle floating effect, used for the background circles.*/
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes fadeInDown {
+          from {
+            opacity: 0;
+            transform: translateY(-20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        @keyframes fadeInUp {
+          from {
+            opacity: 0;
+            transform: translateY(20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+
+        @keyframes slideInFromLeft {
+            from {
+                transform: translateX(-50%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideInFromRight {
+            from {
+                transform: translateX(50%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+         @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+    </style>
+</head>
+<body>
+    <div class="landing-page">
+        <div class="landing-header">
+            <h1>Project Title</h1>
+            <h3>By Abhilash</h3>
+            <h3>Using D3.js</h3>
+        </div>
+
+        <div class="landing-content">
+            <div class="landing-text">
+                <p>
+                    This project visualizes the relationship between education levels and economic outcomes across US counties. It uses D3.js to create interactive maps, histograms, and a scatter plot, allowing users to explore the data and see how these factors correlate.
+                </p>
+            </div>
+            <div class="landing-button-container">
+                <a href="visualisations.html" class = "landing-button">Explore Visualizations</a>
+            </div>
+        </div>
+
+        <!-- Animated Background Circles -->
+        <div class="circle circle-1"></div>
+        <div class="circle circle-2"></div>
+        <div class="circle circle-3"></div>
+        <div class="circle circle-4"></div>
+    </div>
+</body>
+</html>
